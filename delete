@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'RESOURCE_NAME', description: 'Resource to delete (e.g., All, cluster, cluster-subnet-group, parameter-group, etc.)')
+        string(name: 'RESOURCE_IDENTIFIER', description: 'Identifier of the resource to delete (e.g., Cluster ID, Parameter Group Name, etc.)')
+        string(name: 'ADDITIONAL_PARAMS', description: 'Additional parameters required for the resource (e.g., , family, etc.)', defaultValue: '')
+    }
+    stages {
+        stage('Delete RDS  Resources') {
+            steps {
+                script {
+                    echo "Starting deletion process for resource: ${params.RESOURCE_NAME}"
+
+                    if (params.RESOURCE_NAME == 'All') {
+                        echo "Deleting all resources. This will execute multiple delete commands."
+                        sh """
+                            cdscli rds delete-cluster-subnet-group --subnet-group-name ${params.RESOURCE_IDENTIFIER}
+                            cdscli rds delete-parameter-group --parameter-group-name ${params.RESOURCE_IDENTIFIER}
+                            cdscli rds delete-cluster-parameter-group --cluster-parameter-group-name ${params.RESOURCE_IDENTIFIER}
+                            cdscli rds delete-cluster --cluster-id ${params.RESOURCE_IDENTIFIER}
+                            cdscli rds delete-global-cluster --global-cluster-id ${params.RESOURCE_IDENTIFIER}
+                            cdscli rds delete-read-replica --replica-id ${params.RESOURCE_IDENTIFIER}
+                            cdscli logs delete-log-group --log-group-name ${params.RESOURCE_IDENTIFIER}
+                            cdscli cloudwatch delete-alarm --alarm-name ${params.RESOURCE_IDENTIFIER}
+                            echo "Note: Datadog integrations and RDSOSMetrics need manual deletion."
+                        """
+                    } else {
+                        switch (params.RESOURCE_NAME) {
+                            case "cluster-subnet-group":
+                                sh """
+                                    cdscli rds delete-cluster-subnet-group --subnet-group-name ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "parameter-group":
+                                sh """
+                                    cdscli rds delete-parameter-group --parameter-group-name ${params.RESOURCE_IDENTIFIER} --family ${params.ADDITIONAL_PARAMS}
+                                """
+                                break
+                            case "cluster-parameter-group":
+                                sh """
+                                    cdscli rds delete-cluster-parameter-group --cluster-parameter-group-name ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "cluster":
+                                sh """
+                                    cdscli rds delete-cluster --cluster-id ${params.RESOURCE_IDENTIFIER} --skip-final-snapshot
+                                """
+                                break
+                            case "global-cluster":
+                                sh """
+                                    cdscli rds delete-global-cluster --global-cluster-id ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "read-replica":
+                                sh """
+                                    cdscli rds delete-read-replica --replica-id ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "create-log-groups":
+                                sh """
+                                    cdscli logs delete-log-group --log-group-name ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "cloudwatch-alarm":
+                                sh """
+                                    cdscli cloudwatch delete-alarm --alarm-name ${params.RESOURCE_IDENTIFIER}
+                                """
+                                break
+                            case "datadog-integration":
+                                echo "Manual deletion required for Datadog integration."
+                                break
+                            
+                            default:
+                                error "Invalid RESOURCE_NAME specified. Please provide a valid resource type."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
