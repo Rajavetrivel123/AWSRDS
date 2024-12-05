@@ -1,0 +1,197 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'DELETE_OPERATION',
+            choices: [
+                'cluster-subnet-group',
+                'parameter-group',
+                'group-parameter-cluster',
+                'secondary-cluster',
+                'global-cluster',
+                'read-replica',
+                'read-replica-group-parameter',
+                'core',
+                'core-secondary',
+                'ALL'
+            ],
+            description: 'Select the specific delete operation to execute'
+        )
+        string(
+            name: 'STACK_NAME',
+            defaultValue: '',
+            description: 'Enter the name of the stack/resource to be deleted'
+        )
+        string(
+            name: 'ADDITIONAL_PARAMS',
+            defaultValue: '',
+            description: 'Enter any additional parameters for the cdscli delete command'
+        )
+        string(
+            name: 'CONFIRM_DELETE',
+            defaultValue: '',
+            description: 'To confirm deletion, type DELETE (required for operation ALL)'
+        )
+    }
+
+    stages {
+        stage('Validation') {
+            steps {
+                script {
+                    if (params.STACK_NAME.trim() == '') {
+                        error("The STACK_NAME parameter is required. Please provide a valid stack name.")
+                    }
+                    if (params.DELETE_OPERATION == 'ALL' && params.CONFIRM_DELETE != 'DELETE') {
+                        error("You must type DELETE in the CONFIRM_DELETE parameter to confirm deletion for the ALL operation.")
+                    }
+                }
+                echo "Validated inputs successfully!"
+            }
+        }
+
+        stage('Delete Cluster Subnet Group') {
+            when {
+                expression { params.DELETE_OPERATION == 'cluster-subnet-group' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete cluster-subnet-group ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Parameter Group') {
+            when {
+                expression { params.DELETE_OPERATION == 'parameter-group' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete parameter-group ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Group Parameter Cluster') {
+            when {
+                expression { params.DELETE_OPERATION == 'group-parameter-cluster' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete group-parameter-cluster ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Secondary Cluster') {
+            when {
+                expression { params.DELETE_OPERATION == 'secondary-cluster' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete secondary-cluster ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Global Cluster') {
+            when {
+                expression { params.DELETE_OPERATION == 'global-cluster' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete global-cluster ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Read Replica') {
+            when {
+                expression { params.DELETE_OPERATION == 'read-replica' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete read-replica ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Read Replica Group Parameter') {
+            when {
+                expression { params.DELETE_OPERATION == 'read-replica-group-parameter' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete read-replica-group-parameter ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Core') {
+            when {
+                expression { params.DELETE_OPERATION == 'core' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete core ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Delete Core Secondary') {
+            when {
+                expression { params.DELETE_OPERATION == 'core-secondary' || params.DELETE_OPERATION == 'ALL' }
+            }
+            steps {
+                script {
+                    def deleteCommand = "cdscli delete core-secondary ${params.STACK_NAME} ${params.ADDITIONAL_PARAMS}"
+                    echo "Executing command: ${deleteCommand}"
+                    sh """
+                        ${deleteCommand}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Resource deletion completed successfully!'
+        }
+        failure {
+            echo 'Resource deletion failed. Check the logs for details.'
+        }
+    }
+}
